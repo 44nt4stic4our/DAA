@@ -1,44 +1,55 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-
-struct Item {
-    int value, weight;
+struct Item
+{
+    int value;int weight;double ratio;
 };
-
-bool cmp(Item a, Item b) {
-    return (double)a.value / a.weight > (double)b.value / b.weight;
+bool compare(Item a, Item b)
+{
+    return a.ratio > b.ratio;
 }
-
-double fractionalKnapsack(int W, Item items[], int n) {
-    sort(items, items + n, cmp);
+double fractionalKnapsack(int capacity, Item items[], int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        items[i].ratio = (double)items[i].value / items[i].weight;
+    }
+    sort(items, items + n, compare);
     double totalValue = 0.0;
-
-    for (int i = 0; i < n; i++) {
-        if (W >= items[i].weight) {
-            W -= items[i].weight;
+    for (int i = 0; i < n; i++)
+    {
+        if (capacity >= items[i].weight)
+        {
+            capacity -= items[i].weight;
             totalValue += items[i].value;
-        } else {
-            totalValue += items[i].value * ((double)W / items[i].weight);
+        }
+        else
+        {
+            totalValue += items[i].value * ((double)capacity / items[i].weight);
             break;
         }
     }
     return totalValue;
 }
-
-int main() {
-    int n, W;
-    cout << "Enter number of items: ";
+int main()
+{
+    int n;
+    cout << "Enter the number of items: ";
     cin >> n;
-    cout << "Enter knapsack capacity: ";
-    cin >> W;
-
-    Item items[n];
-    cout << "Enter value and weight of each item:\n";
+    Item *items = new Item[n];
     for (int i = 0; i < n; i++)
-        cin >> items[i].value >> items[i].weight;
-
-    cout << "\nMaximum value (Fractional Knapsack): "
-         << fractionalKnapsack(W, items, n) << endl;
+    {
+        cout << "Enter value of item " << i + 1 << ": ";
+        cin >> items[i].value;
+        cout << "Enter weight of item " << i + 1 << ": ";
+        cin >> items[i].weight;
+    }
+    int capacity;
+    cout << "Enter the capacity of the knapsack: ";
+    cin >> capacity;
+    double maxValue = fractionalKnapsack(capacity, items, n);
+    cout << "Maximum value in Fractional Knapsack = " << maxValue << endl;
+    delete[] items;
     return 0;
 }
