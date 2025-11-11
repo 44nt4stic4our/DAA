@@ -44,17 +44,17 @@ int main() {
         int v = edges[j].v;
         int w = edges[j].w;
         if (dist[u] != INT_MAX && dist[u] + w < dist[v]) {
-            cout << "\nGraph contains negative weight cycle\n";
+            cout << "\nGraph contains a negative weight cycle.\n";
             return 0;
         }
     }
 
-    cout << "\nShortest distances from vertex " << src << ":\n";
+    cout << "\nShortest distances from source vertex " << src << ":\n";
     for (int i = 0; i < V; i++) {
         if (dist[i] == INT_MAX)
-            cout << "INF ";
+            cout << "Vertex " << i << ": INF\t";
         else
-            cout << dist[i] << " ";
+            cout << "Vertex " << i << ": " << dist[i] << "\t";
     }
     cout << endl;
 
