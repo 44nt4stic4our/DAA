@@ -1,89 +1,81 @@
 #include <iostream>
 #include <algorithm>
+#include <iomanip>
 using namespace std;
 
 struct Item {
-    int value, weight;
+    int value;int weight;double ratio;
 };
 
-bool cmp(Item a, Item b) {
-    return (double)a.value / a.weight > (double)b.value / b.weight;
+bool compare(Item a, Item b) {
+    return a.ratio > b.ratio;
 }
 
-// -------- Fractional Knapsack (Greedy) --------
-double fractionalKnapsack(int W, Item items[], int n) {
-    sort(items, items + n, cmp);
-    double totalValue = 0.0;
+double fractionalKnapsack(int capacity, Item items[], int n) {
+    for (int i = 0; i < n; i++)
+        items[i].ratio = (double)items[i].value / items[i].weight;
 
+    sort(items, items + n, compare);
+
+    double totalValue = 0.0;
     for (int i = 0; i < n; i++) {
-        if (W >= items[i].weight) {
-            W -= items[i].weight;
+        if (capacity >= items[i].weight) {
+            capacity -= items[i].weight;
             totalValue += items[i].value;
         } else {
-            totalValue += items[i].value * ((double)W / items[i].weight);
+            totalValue += items[i].value * ((double)capacity / items[i].weight);
             break;
         }
     }
     return totalValue;
 }
 
-// -------- 0/1 Knapsack (Dynamic Programming) --------
-int knapsack01(int W, Item items[], int n) {
-    int dp[n + 1][W + 1];
-
+int zeroOneKnapsack(int capacity, Item items[], int n) {
+    int dp[n + 1][capacity + 1];
     for (int i = 0; i <= n; i++) {
-        for (int w = 0; w <= W; w++) {
+        for (int w = 0; w <= capacity; w++) {
             if (i == 0 || w == 0)
                 dp[i][w] = 0;
             else if (items[i - 1].weight <= w)
-                dp[i][w] = max(items[i - 1].value + dp[i - 1][w - items[i - 1].weight], dp[i - 1][w]);
+                dp[i][w] = max(items[i - 1].value + dp[i - 1][w - items[i - 1].weight],
+                               dp[i - 1][w]);
             else
                 dp[i][w] = dp[i - 1][w];
         }
     }
-    return dp[n][W];
+    return dp[n][capacity];
 }
 
-// -------- Main Function --------
 int main() {
-    int n, W, choice;
+
+    int n;
     cout << "Enter number of items: ";
     cin >> n;
-    cout << "Enter knapsack capacity: ";
-    cin >> W;
 
-    Item items[n];
-    cout << "Enter value and weight of each item:\n";
-    for (int i = 0; i < n; i++)
-        cin >> items[i].value >> items[i].weight;
+    Item *items = new Item[n];
+    for (int i = 0; i < n; i++) {
+        cout << "Enter value of item " << i + 1 << ": ";
+        cin >> items[i].value;
+        cout << "Enter weight of item " << i + 1 << ": ";
+        cin >> items[i].weight;
+    }
 
-    do {
-        cout << "\n--- KNAPSACK MENU ---\n";
-        cout << "1. Fractional Knapsack\n";
-        cout << "2. 0/1 Knapsack\n";
-        cout << "3. Exit\n";
-        cout << "Enter your choice: ";
-        cin >> choice;
+    int capacity;
+    cout << "Enter capacity of knapsack: ";
+    cin >> capacity;
 
-        switch (choice) {
-            case 1:
-                cout << "\nMaximum value (Fractional Knapsack): "
-                     << fractionalKnapsack(W, items, n) << endl;
-                break;
+    double fracValue = fractionalKnapsack(capacity, items, n);
+    int dpValue = zeroOneKnapsack(capacity, items, n);
 
-            case 2:
-                cout << "\nMaximum value (0/1 Knapsack): "
-                     << knapsack01(W, items, n) << endl;
-                break;
+    cout << fixed << setprecision(2);
+    cout << "\nMaximum value (Fractional Knapsack / Greedy) = " << fracValue << endl;
+    cout << "Maximum value (0/1 Knapsack / DP) = " << dpValue << endl;
 
-            case 3:
-                cout << "Exiting program.\n";
-                break;
+    cout << "\n=> Observation: Fractional Knapsack (Greedy) may give a higher "
+            "value, but in 0/1 Knapsack we cannot take fractions of items, "
+            "so DP gives the *true optimal solution*."
+         << endl;
 
-            default:
-                cout << "Invalid choice! Try again.\n";
-        }
-    } while (choice != 3);
-
+    delete[] items;
     return 0;
 }
