@@ -1,54 +1,102 @@
 #include <iostream>
-#define INF 9999
+#include <vector>
+#include <climits>
 using namespace std;
-
-int n, cost[10][10], visited[10], minCost = INF;
-int bestPath[10], tempPath[10];
-
-void TSP(int city, int count, int costTillNow) {
-    visited[city] = 1;
-    tempPath[count - 1] = city;
-
-    if (count == n && cost[city][0] > 0)
+class TSP
+{
+private:
+    int n;                    // Number of cities
+    vector<vector<int>> dist; // Distance matrix
+    int minCost = INT_MAX;    // Minimum cost found
+    vector<int> bestPath;     // Best path found
+    // Helper function to calculate the lower bound (minimum cost estimate) for a partial path
+    int calculateLowerBound(const vector<int> &path, const vector<bool> &visited)
     {
-        int total = costTillNow + cost[city][0];
-        if (total < minCost) {
-            minCost = total;
-            for (int i = 0; i < n; i++)
-                bestPath[i] = tempPath[i];
+        int bound = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            if (visited[i])
+            {
+                int minEdge = INT_MAX;
+                for (int j = 0; j < n; ++j)
+                {
+                    if (i != j && !visited[j])
+                    {
+                        minEdge = min(minEdge, dist[i][j]);
+                    }
+                }
+                bound += minEdge;
+            }
         }
-        visited[city] = 0;
-        return;
+        return bound;
+    }
+    // Recursive function to explore paths using Branch and Bound
+    void branchAndBoundUtil(vector<int> &path, vector<bool> &visited, int currentCost, int level)
+    {
+        if (level == n)
+        {
+            int totalCost = currentCost + dist[path[level - 1]][path[0]];
+            if (totalCost < minCost)
+            {
+                minCost = totalCost;
+                bestPath = path;
+                bestPath.push_back(path[0]); // Complete the cycle
+            }
+            return;
+        }
+        for (int i = 0; i < n; ++i)
+        {
+            if (!visited[i])
+            {
+                path.push_back(i);
+                visited[i] = true;
+                int lowerBound = calculateLowerBound(path, visited);
+                if (currentCost + lowerBound < minCost)
+                {
+                    branchAndBoundUtil(path, visited, currentCost + dist[path[level - 1]][i], level + 1);
+                }
+                visited[i] = false;
+                path.pop_back();
+            }
+        }
     }
 
-    for (int i = 0; i < n; i++) {
-        if (!visited[i] && cost[city][i] > 0) {
-            int newCost = costTillNow + cost[city][i];
-            if (newCost < minCost)
-                TSP(i, count + 1, newCost);
-        }
+public:
+    TSP(int cities, const vector<vector<int>> &distance) : n(cities), dist(distance) {}
+    void solve()
+    {
+        vector<int> path = {0}; // Start from city 0
+        vector<bool> visited(n, false);
+        visited[0] = true;
+        branchAndBoundUtil(path, visited, 0, 1);
     }
-    visited[city] = 0; // backtrack
-}
-
-int main() {
-    cout << "Enter number of cities: ";
+    void printSolution()
+    {
+        cout << "Minimum Cost: " << minCost << endl;
+        cout << "Optimal Path: ";
+        for (int city : bestPath)
+        {
+            cout << city << " ";
+        }
+        cout << endl;
+    }
+};
+int main()
+{
+    int n;
+    cout << "Enter the number of cities: ";
     cin >> n;
-
-    cout << "Enter cost matrix (use 9999 if no direct path):\n";
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            cin >> cost[i][j];
-
-    for (int i = 0; i < n; i++)
-        visited[i] = 0;
-
-    TSP(0, 1, 0); 
-
-    cout << "\nMinimum cost: " << minCost << endl;
-    cout << "Optimal path: ";
-    for (int i = 0; i < n; i++)
-        cout << bestPath[i] << " -> ";
-    cout << "0\n";
+    vector<vector<int>> dist(n, vector<int>(n));
+    cout << "Enter the distance matrix:" << endl;
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            cin >> dist[i][j];
+        }
+    }
+    TSP tsp(n, dist);
+    tsp.solve();
+    tsp.printSolution();
     return 0;
 }
